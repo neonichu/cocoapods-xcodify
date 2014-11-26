@@ -18,7 +18,7 @@ module Pod
     #       in the `plugins.json` file, once your plugin is released.
     #
     class Xcodify < Command
-      self.summary = "Short description of cocoapods-xcodify."
+      self.summary = 'Short description of cocoapods-xcodify.'
 
       self.description = <<-DESC
         Longer description of cocoapods-xcodify.
@@ -33,7 +33,7 @@ module Pod
 
       def validate!
         super
-        help! "A Pod name is required." unless @name
+        help! 'A Pod name is required.' unless @name
       end
 
       def run

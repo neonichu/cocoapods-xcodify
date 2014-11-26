@@ -7,4 +7,3 @@ group :development do
   gem 'cocoapods'
   gem 'bacon'
 end
-

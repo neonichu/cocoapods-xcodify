@@ -10,4 +10,3 @@ task :specs do
 end
 
 task :default => :specs
-
