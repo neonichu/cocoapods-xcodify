@@ -1,43 +1,90 @@
 module Pod
+  class Installer
+    private
+
+    def set_target_dependencies
+    end
+
+    class Analyzer
+      private
+
+      class AnalysisResult
+        def specs_by_target=(specs_by_target)
+          current_pod = @podfile_state.added.first
+
+          @specs_by_target = {}
+          specs_by_target.each do |target, specs|
+            @specs_by_target[target] = specs.reject { |spec| spec.name != current_pod }
+          end
+        end
+      end
+    end
+  end
+
   class Command
-    # This is an example of a cocoapods plugin adding a top-level subcommand
-    # to the 'pod' command.
-    #
-    # You can also create subcommands of existing or new commands. Say you
-    # wanted to add a subcommand to `list` to show newly deprecated pods,
-    # (e.g. `pod list deprecated`), there are a few things that would need
-    # to change.
-    #
-    # - move this file to `lib/pod/command/list/deprecated.rb` and update
-    #   the class to exist in the the Pod::Command::List namespace
-    # - change this class to extend from `List` instead of `Command`. This
-    #   tells the plugin system that it is a subcommand of `list`.
-    # - edit `lib/cocoapods_plugins.rb` to require this file
-    #
-    # @todo Create a PR to add your plugin to CocoaPods/cocoapods.org
-    #       in the `plugins.json` file, once your plugin is released.
-    #
     class Xcodify < Command
-      self.summary = 'Short description of cocoapods-xcodify.'
+      self.summary = 'A CocoaPods plugin that allows you to produce a throw-away Xcode project.'
 
       self.description = <<-DESC
-        Longer description of cocoapods-xcodify.
+        This plugin allows you to produce a throw-away Xcode project based on your podspec,
+        so that library consumers can integrate that without using CocoaPods and you don’t
+        have to spend time maintaining a feature you don’t use.
       DESC
 
-      self.arguments = 'NAME'
+      self.arguments = [
+        CLAide::Argument.new('NAME', true),
+      ]
+
+      def self.options
+        [
+          ['--spec-sources=private,https://github.com/CocoaPods/Specs.git',
+            'The sources to pull dependant pods from (defaults to master)'],
+        ]
+      end
 
       def initialize(argv)
         @name = argv.shift_argument
+        @spec_sources = argv.option('spec-sources', 'https://github.com/CocoaPods/Specs.git').split(',')
+
+        @spec = spec_with_path(@name)
         super
       end
 
       def validate!
         super
-        help! 'A Pod name is required.' unless @name
+        help! 'A podspec path is required.' unless @spec
       end
 
       def run
-        UI.puts "Add your implementation for the cocoapods-xcodify plugin in #{__FILE__}"
+        if @spec.nil?
+          help! 'Unable to find a podspec with path or name.'
+          return
+        end
+
+        @spec.available_platforms.each do |platform|
+          config.sandbox_root       = 'xcodify'
+          config.integrate_targets  = false
+          config.skip_repo_update   = true
+
+          sandbox = install_pod(platform.name)
+
+          FileUtils.rm_f('Podfile.lock')
+
+          root = Pathname.new(config.sandbox_root)
+          FileUtils.rm_f(root + 'Manifest.lock')
+          FileUtils.rm_rf(root + 'Headers')
+          FileUtils.rm_rf(root + 'Local Podspecs')
+          FileUtils.rm_rf(root + 'Target Support Files' + 'Pods')
+
+          pch = root + 'Target Support Files' + "Pods-#{@spec.name}" + "Pods-#{@spec.name}-prefix.pch"
+          File.open(pch, 'w') {|file| file.truncate(0) }
+
+          # TODO: Delete aggregate target from project
+          FileUtils.mv(root + 'Pods.xcodeproj', root + "#{@spec.name}.xcodeproj")
+
+          # TODO: Handle multiple platforms correctly
+          break
+        end
       end
     end
   end

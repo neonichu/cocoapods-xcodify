@@ -1,1 +1,1 @@
-require 'cocoapods-xcodify/command/xcodify.rb'
+require 'cocoapods_xcodify/command/xcodify.rb'

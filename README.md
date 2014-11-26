@@ -1,6 +1,6 @@
 # cocoapods-xcodify
 
-A description of cocoapods-xcodify.
+This plugin allows you to produce a throw-away Xcode project based on your podspec, so that library consumers can integrate that without using CocoaPods and you don’t have to spend time maintaining a feature you don’t use.
 
 ## Installation
 
@@ -8,4 +8,4 @@ A description of cocoapods-xcodify.
 
 ## Usage
 
-    $ pod spec xcodify POD_NAME
+    $ pod xcodify NAME.podspec
