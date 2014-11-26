@@ -1,26 +1,4 @@
 module Pod
-  class Installer
-    private
-
-    def set_target_dependencies
-    end
-
-    class Analyzer
-      private
-
-      class AnalysisResult
-        def specs_by_target=(specs_by_target)
-          current_pod = @podfile_state.added.first
-
-          @specs_by_target = {}
-          specs_by_target.each do |target, specs|
-            @specs_by_target[target] = specs.reject { |spec| spec.name != current_pod }
-          end
-        end
-      end
-    end
-  end
-
   class Command
     class Xcodify < Command
       self.summary = 'A CocoaPods plugin that allows you to produce a throw-away Xcode project.'
@@ -56,6 +34,8 @@ module Pod
       end
 
       def run
+        require 'cocoapods_xcodify/installer_patch.rb'
+
         if @spec.nil?
           help! 'Unable to find a podspec with path or name.'
           return
